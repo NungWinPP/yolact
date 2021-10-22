@@ -598,6 +598,38 @@ def evalimage(net:Yolact, path:str, save_path:str=None):
     preds = net(batch)
 
     img_numpy = prep_display(preds, frame, None, None, undo_transform=False)
+    class_output = preds[0]['detection']['class']
+    print("------------------------")
+    for i in class_output:
+        if i == 0:
+            print('unripe')
+        elif i == 1:
+            print('medium')
+        elif i == 2:
+            print('ripe')
+
+    print(path[-7:-4])
+    if path[-7:-4] == 'unr':
+        if class_output[0] == 0:
+            confmet[0][0] += 1
+        elif class_output[0] == 1:
+            confmet[0][1] += 1
+        elif class_output[0] == 2:
+            confmet[0][2] += 1
+    elif path[-7:-4] == 'med':
+        if class_output[0] == 0:
+            confmet[1][0] += 1
+        elif class_output[0] == 1:
+            confmet[1][1] += 1
+        elif class_output[0] == 2:
+            confmet[1][2] += 1
+    elif path[-7:-4] == 'rip':
+        if class_output[0] == 0:
+            confmet[2][0] += 1
+        elif class_output[0] == 1:
+            confmet[2][1] += 1
+        elif class_output[0] == 2:
+            confmet[2][2] += 1
     
     if save_path is None:
         img_numpy = img_numpy[:, :, (2, 1, 0)]
@@ -622,6 +654,18 @@ def evalimages(net:Yolact, input_folder:str, output_folder:str):
 
         evalimage(net, path, out_path)
         print(path + ' -> ' + out_path)
+    print('')
+    print(confmet)
+    print('unripe precision = ', (confmet[0][0] / (confmet[0][0] + confmet[0][1] + confmet[0][2])))
+    print('medium precision = ', (confmet[1][1] / (confmet[1][0] + confmet[1][1] + confmet[1][2])))
+    print('ripe precision = ', (confmet[2][2] / (confmet[2][0] + confmet[2][1] + confmet[2][2])))
+    print('unripe recall = ', (confmet[0][0] / (confmet[0][0] + confmet[1][0] + confmet[2][0])))
+    print('medium recall = ', (confmet[1][1] / (confmet[0][1] + confmet[1][1] + confmet[2][1])))
+    print('ripe recall = ', (confmet[2][2] / (confmet[0][2] + confmet[1][2] + confmet[2][2])))
+    print('accuracy of classifier', (confmet[0][0] + confmet[1][1] + confmet[2][2]) / (
+                confmet[0][0] + confmet[0][1] + confmet[0][2] + confmet[1][0] + confmet[1][1] + confmet[1][2] +
+                confmet[2][0] + confmet[2][1] + confmet[2][2]))
+    print('')
     print('Done.')
 
 from multiprocessing.pool import ThreadPool
